@@ -1,0 +1,29 @@
+
+CREATE STREAM "ZPFM_FILE_CGE_TEST"
+WITH (KAFKA_TOPIC='ZPFM.FILE.CGE.TEST', PARTITIONS=1, VALUE_FORMAT='AVRO');
+
+
+CREATE STREAM "ZPFM_PFM_CGE_Test17_A" WITH (KAFKA_TOPIC= 'ZPFM.PFM.CGE.Test17_A', PARTITIONS=1, VALUE_FORMAT= 'AVRO')
+AS
+SELECT 
+       MOVIMIENTOID AS "movimientoId",
+       FECHA AS "fecha",
+       DATO1 AS "valor1",
+       DATO2 AS "valor2",
+       ROWTIME AS "fechaTopicCDC",
+       true AS "esTest17_A"
+       FROM "ZPFM_FILE_CGE_TEST"
+         EMIT CHANGES;
+  
+
+CREATE STREAM "ZPFM_PFM_CGE_Test17_B" WITH (KAFKA_TOPIC= 'ZPFM.PFM.CGE.Test17_B', PARTITIONS=1, VALUE_FORMAT= 'AVRO')
+AS
+SELECT
+       MOVIMIENTOID AS "movimientoId",
+       FECHA AS "fecha",
+       DATO1 AS "valor1",
+       DATO2 AS "valor2",
+       ROWTIME AS "fechaTopicCDC",
+       true AS "esTest17_B"
+       FROM "ZPFM_FILE_CGE_TEST"
+         EMIT CHANGES;

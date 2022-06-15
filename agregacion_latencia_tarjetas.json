@@ -1,0 +1,1171 @@
+db.movimientosTarjetaCredito.aggregate([
+   { $project: { _insertedTS:1 , fechaTopicFinal:1 ,  fechaCDC:1 , fechaTopicCDC: 1, esOrigenCDC: 1,
+      filterNeg: { $cond: { if: { $gte: ["$_insertedTS","$fechaTopicFinal"] }, then: 1, else : 0}},
+      filterNeg2: { $cond: { if: { $gte: ["$fechaTopicFinal","$fechaTopicCDC"] }, then: 1, else : 0}}
+     }   
+   },
+   {
+    $match: {_insertedTS: {$gt: new Date(ISODate().getTime() - 60000 )}, esOrigenCDC: true, filterNeg: 1, filterNeg2: 1 } 
+   },
+  {$group: {
+               _id: "Latencias Flujo Tarjeta Crédito", 
+                fecha: {$max: "$_insertedTS"} ,
+                mediaMongo:  {$avg: {$subtract: ["$_insertedTS", "$fechaTopicFinal"]}},
+                maximoMongo: {$max: {$subtract: ["$_insertedTS", "$fechaTopicFinal"]}},
+                minimoMongo: {$min: {$subtract: ["$_insertedTS", "$fechaTopicFinal"]}},
+                mediaKafka:  {$avg: {$subtract: ["$fechaTopicFinal", "$fechaTopicCDC"]}},
+                maximoKafka: {$max: {$subtract: ["$fechaTopicFinal", "$fechaTopicCDC"]}},
+                minimoKafka: {$min: {$subtract: ["$fechaTopicFinal", "$fechaTopicCDC"]}},
+                mediaCDC:    {$avg: {$subtract: ["$fechaTopicCDC", "$fechaCDC"]}},
+                maximoCDC:   {$max: {$subtract: ["$fechaTopicCDC", "$fechaCDC"]}},
+                minimoCDC:   {$min: {$subtract: ["$fechaTopicCDC", "$fechaCDC"]}},
+                mediaTotal:  {$avg: {$subtract: ["$_insertedTS", "$fechaCDC"]}},
+                maximoTotal: {$max: {$subtract: ["$_insertedTS", "$fechaCDC"]}},
+                minimoTotal: {$min: {$subtract: ["$_insertedTS", "$fechaCDC"]}},
+                
+                totalRegistros: {$sum: 1}
+    }
+  },
+    {
+     $addFields:{
+       fecha: {$toString: "$fecha"},
+       maximoMongo: { $toDouble: "$maximoMongo" },
+       minimoMongo: { $toDouble: "$minimoMongo" },  
+       maximoKafka: { $toDouble: "$maximoKafka" },
+       minimoKafka: { $toDouble: "$minimoKafka" },    
+       maximoCDC: { $toDouble: "$maximoCDC"  },
+       minimoCDC: { $toDouble: "$minimoCDC" },  
+       maximoTotal: { $toDouble: "$maximoTotal" },
+       minimoTotal: { $toDouble: "$minimoTotal" },
+       mediaMongo:  {$round: ["$mediaMongo", 0]},
+       mediaKafka:  {$round: ["$mediaKafka", 0]},
+       mediaCDC:  {$round: ["$mediaCDC", 0]},
+       mediaTotal:  {$round: ["$mediaTotal", 0]}
+      }
+  }
+  ], 
+  { explain:  true} )
+  
+  
+  --salida: 
+  
+  {
+    "serverInfo" : {
+        "host" : "xxemongodbxas01",
+        "port" : 27017,
+        "version" : "4.2.8",
+        "gitVersion" : "43d25964249164d76d5e04dd6cf38f6111e21f5f"
+    },
+    "mergeType" : "mongos",
+    "splitPipeline" : {
+        "shardsPart" : [ 
+            {
+                "$match" : {
+                    "$and" : [ 
+                        {
+                            "_insertedTS" : {
+                                "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                            }
+                        }, 
+                        {
+                            "esOrigenCDC" : {
+                                "$eq" : true
+                            }
+                        }
+                    ]
+                }
+            }, 
+            {
+                "$project" : {
+                    "_id" : true,
+                    "fechaTopicFinal" : true,
+                    "_insertedTS" : true,
+                    "fechaTopicCDC" : true,
+                    "esOrigenCDC" : true,
+                    "fechaCDC" : true,
+                    "filterNeg" : {
+                        "$cond" : [ 
+                            {
+                                "$gte" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }, 
+                            {
+                                "$const" : 1.0
+                            }, 
+                            {
+                                "$const" : 0.0
+                            }
+                        ]
+                    },
+                    "filterNeg2" : {
+                        "$cond" : [ 
+                            {
+                                "$gte" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }, 
+                            {
+                                "$const" : 1.0
+                            }, 
+                            {
+                                "$const" : 0.0
+                            }
+                        ]
+                    }
+                }
+            }, 
+            {
+                "$match" : {
+                    "$and" : [ 
+                        {
+                            "filterNeg" : {
+                                "$eq" : 1.0
+                            }
+                        }, 
+                        {
+                            "filterNeg2" : {
+                                "$eq" : 1.0
+                            }
+                        }
+                    ]
+                }
+            }, 
+            {
+                "$group" : {
+                    "_id" : {
+                        "$const" : "Latencias Flujo Tarjeta Crédito"
+                    },
+                    "fecha" : {
+                        "$max" : "$_insertedTS"
+                    },
+                    "mediaMongo" : {
+                        "$avg" : {
+                            "$subtract" : [ 
+                                "$_insertedTS", 
+                                "$fechaTopicFinal"
+                            ]
+                        }
+                    },
+                    "maximoMongo" : {
+                        "$max" : {
+                            "$subtract" : [ 
+                                "$_insertedTS", 
+                                "$fechaTopicFinal"
+                            ]
+                        }
+                    },
+                    "minimoMongo" : {
+                        "$min" : {
+                            "$subtract" : [ 
+                                "$_insertedTS", 
+                                "$fechaTopicFinal"
+                            ]
+                        }
+                    },
+                    "mediaKafka" : {
+                        "$avg" : {
+                            "$subtract" : [ 
+                                "$fechaTopicFinal", 
+                                "$fechaTopicCDC"
+                            ]
+                        }
+                    },
+                    "maximoKafka" : {
+                        "$max" : {
+                            "$subtract" : [ 
+                                "$fechaTopicFinal", 
+                                "$fechaTopicCDC"
+                            ]
+                        }
+                    },
+                    "minimoKafka" : {
+                        "$min" : {
+                            "$subtract" : [ 
+                                "$fechaTopicFinal", 
+                                "$fechaTopicCDC"
+                            ]
+                        }
+                    },
+                    "mediaCDC" : {
+                        "$avg" : {
+                            "$subtract" : [ 
+                                "$fechaTopicCDC", 
+                                "$fechaCDC"
+                            ]
+                        }
+                    },
+                    "maximoCDC" : {
+                        "$max" : {
+                            "$subtract" : [ 
+                                "$fechaTopicCDC", 
+                                "$fechaCDC"
+                            ]
+                        }
+                    },
+                    "minimoCDC" : {
+                        "$min" : {
+                            "$subtract" : [ 
+                                "$fechaTopicCDC", 
+                                "$fechaCDC"
+                            ]
+                        }
+                    },
+                    "mediaTotal" : {
+                        "$avg" : {
+                            "$subtract" : [ 
+                                "$_insertedTS", 
+                                "$fechaCDC"
+                            ]
+                        }
+                    },
+                    "maximoTotal" : {
+                        "$max" : {
+                            "$subtract" : [ 
+                                "$_insertedTS", 
+                                "$fechaCDC"
+                            ]
+                        }
+                    },
+                    "minimoTotal" : {
+                        "$min" : {
+                            "$subtract" : [ 
+                                "$_insertedTS", 
+                                "$fechaCDC"
+                            ]
+                        }
+                    },
+                    "totalRegistros" : {
+                        "$sum" : {
+                            "$const" : 1.0
+                        }
+                    }
+                }
+            }
+        ],
+        "mergerPart" : [ 
+            {
+                "$group" : {
+                    "_id" : "$$ROOT._id",
+                    "fecha" : {
+                        "$max" : "$$ROOT.fecha"
+                    },
+                    "mediaMongo" : {
+                        "$avg" : "$$ROOT.mediaMongo"
+                    },
+                    "maximoMongo" : {
+                        "$max" : "$$ROOT.maximoMongo"
+                    },
+                    "minimoMongo" : {
+                        "$min" : "$$ROOT.minimoMongo"
+                    },
+                    "mediaKafka" : {
+                        "$avg" : "$$ROOT.mediaKafka"
+                    },
+                    "maximoKafka" : {
+                        "$max" : "$$ROOT.maximoKafka"
+                    },
+                    "minimoKafka" : {
+                        "$min" : "$$ROOT.minimoKafka"
+                    },
+                    "mediaCDC" : {
+                        "$avg" : "$$ROOT.mediaCDC"
+                    },
+                    "maximoCDC" : {
+                        "$max" : "$$ROOT.maximoCDC"
+                    },
+                    "minimoCDC" : {
+                        "$min" : "$$ROOT.minimoCDC"
+                    },
+                    "mediaTotal" : {
+                        "$avg" : "$$ROOT.mediaTotal"
+                    },
+                    "maximoTotal" : {
+                        "$max" : "$$ROOT.maximoTotal"
+                    },
+                    "minimoTotal" : {
+                        "$min" : "$$ROOT.minimoTotal"
+                    },
+                    "totalRegistros" : {
+                        "$sum" : "$$ROOT.totalRegistros"
+                    },
+                    "$doingMerge" : true
+                }
+            }, 
+            {
+                "$addFields" : {
+                    "fecha" : {
+                        "$convert" : {
+                            "input" : "$fecha",
+                            "to" : {
+                                "$const" : "string"
+                            }
+                        }
+                    },
+                    "maximoMongo" : {
+                        "$convert" : {
+                            "input" : "$maximoMongo",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "minimoMongo" : {
+                        "$convert" : {
+                            "input" : "$minimoMongo",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "maximoKafka" : {
+                        "$convert" : {
+                            "input" : "$maximoKafka",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "minimoKafka" : {
+                        "$convert" : {
+                            "input" : "$minimoKafka",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "maximoCDC" : {
+                        "$convert" : {
+                            "input" : "$maximoCDC",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "minimoCDC" : {
+                        "$convert" : {
+                            "input" : "$minimoCDC",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "maximoTotal" : {
+                        "$convert" : {
+                            "input" : "$maximoTotal",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "minimoTotal" : {
+                        "$convert" : {
+                            "input" : "$minimoTotal",
+                            "to" : {
+                                "$const" : "double"
+                            }
+                        }
+                    },
+                    "mediaMongo" : {
+                        "$round" : [ 
+                            "$mediaMongo", 
+                            {
+                                "$const" : 0.0
+                            }
+                        ]
+                    },
+                    "mediaKafka" : {
+                        "$round" : [ 
+                            "$mediaKafka", 
+                            {
+                                "$const" : 0.0
+                            }
+                        ]
+                    },
+                    "mediaCDC" : {
+                        "$round" : [ 
+                            "$mediaCDC", 
+                            {
+                                "$const" : 0.0
+                            }
+                        ]
+                    },
+                    "mediaTotal" : {
+                        "$round" : [ 
+                            "$mediaTotal", 
+                            {
+                                "$const" : 0.0
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "shards" : {
+        "XXEMONGODBXAS_0" : {
+            "host" : "XXEMONGODBXAS03:27018",
+            "stages" : [ 
+                {
+                    "$cursor" : {
+                        "query" : {
+                            "$and" : [ 
+                                {
+                                    "_insertedTS" : {
+                                        "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                                    }
+                                }, 
+                                {
+                                    "esOrigenCDC" : {
+                                        "$eq" : true
+                                    }
+                                }
+                            ]
+                        },
+                        "fields" : {
+                            "_insertedTS" : 1,
+                            "esOrigenCDC" : 1,
+                            "fechaCDC" : 1,
+                            "fechaTopicCDC" : 1,
+                            "fechaTopicFinal" : 1,
+                            "_id" : 1
+                        },
+                        "queryPlanner" : {
+                            "plannerVersion" : 1,
+                            "namespace" : "ZPFMMDB001_CGE.movimientosTarjetaCredito",
+                            "indexFilterSet" : false,
+                            "parsedQuery" : {
+                                "$and" : [ 
+                                    {
+                                        "esOrigenCDC" : {
+                                            "$eq" : true
+                                        }
+                                    }, 
+                                    {
+                                        "_insertedTS" : {
+                                            "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                                        }
+                                    }
+                                ]
+                            },
+                            "queryHash" : "63428590",
+                            "planCacheKey" : "6CCA3B1E",
+                            "winningPlan" : {
+                                "stage" : "FETCH",
+                                "inputStage" : {
+                                    "stage" : "IXSCAN",
+                                    "keyPattern" : {
+                                        "_insertedTS" : 1,
+                                        "esOrigenCDC" : 1
+                                    },
+                                    "indexName" : "_insertedTS_1_esOrigenCDC_1",
+                                    "isMultiKey" : false,
+                                    "multiKeyPaths" : {
+                                        "_insertedTS" : [],
+                                        "esOrigenCDC" : []
+                                    },
+                                    "isUnique" : false,
+                                    "isSparse" : false,
+                                    "isPartial" : false,
+                                    "indexVersion" : 2,
+                                    "direction" : "forward",
+                                    "indexBounds" : {
+                                        "_insertedTS" : [ 
+                                            "(new Date(1654689190841), new Date(9223372036854775807)]"
+                                        ],
+                                        "esOrigenCDC" : [ 
+                                            "[true, true]"
+                                        ]
+                                    }
+                                }
+                            },
+                            "rejectedPlans" : []
+                        }
+                    }
+                }, 
+                {
+                    "$project" : {
+                        "_id" : true,
+                        "fechaTopicFinal" : true,
+                        "fechaCDC" : true,
+                        "esOrigenCDC" : true,
+                        "fechaTopicCDC" : true,
+                        "_insertedTS" : true,
+                        "filterNeg" : {
+                            "$cond" : [ 
+                                {
+                                    "$gte" : [ 
+                                        "$_insertedTS", 
+                                        "$fechaTopicFinal"
+                                    ]
+                                }, 
+                                {
+                                    "$const" : 1.0
+                                }, 
+                                {
+                                    "$const" : 0.0
+                                }
+                            ]
+                        },
+                        "filterNeg2" : {
+                            "$cond" : [ 
+                                {
+                                    "$gte" : [ 
+                                        "$fechaTopicFinal", 
+                                        "$fechaTopicCDC"
+                                    ]
+                                }, 
+                                {
+                                    "$const" : 1.0
+                                }, 
+                                {
+                                    "$const" : 0.0
+                                }
+                            ]
+                        }
+                    }
+                }, 
+                {
+                    "$match" : {
+                        "$and" : [ 
+                            {
+                                "filterNeg" : {
+                                    "$eq" : 1.0
+                                }
+                            }, 
+                            {
+                                "filterNeg2" : {
+                                    "$eq" : 1.0
+                                }
+                            }
+                        ]
+                    }
+                }, 
+                {
+                    "$group" : {
+                        "_id" : {
+                            "$const" : "Latencias Flujo Tarjeta Crédito"
+                        },
+                        "fecha" : {
+                            "$max" : "$_insertedTS"
+                        },
+                        "mediaMongo" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "maximoMongo" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "minimoMongo" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "mediaKafka" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "maximoKafka" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "minimoKafka" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "mediaCDC" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "maximoCDC" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "minimoCDC" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "mediaTotal" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "maximoTotal" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "minimoTotal" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "totalRegistros" : {
+                            "$sum" : {
+                                "$const" : 1.0
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "XXEMONGODBXAS_1" : {
+            "host" : "XXEMONGODBXAS13:27018",
+            "stages" : [ 
+                {
+                    "$cursor" : {
+                        "query" : {
+                            "$and" : [ 
+                                {
+                                    "_insertedTS" : {
+                                        "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                                    }
+                                }, 
+                                {
+                                    "esOrigenCDC" : {
+                                        "$eq" : true
+                                    }
+                                }
+                            ]
+                        },
+                        "fields" : {
+                            "_insertedTS" : 1,
+                            "esOrigenCDC" : 1,
+                            "fechaCDC" : 1,
+                            "fechaTopicCDC" : 1,
+                            "fechaTopicFinal" : 1,
+                            "_id" : 1
+                        },
+                        "queryPlanner" : {
+                            "plannerVersion" : 1,
+                            "namespace" : "ZPFMMDB001_CGE.movimientosTarjetaCredito",
+                            "indexFilterSet" : false,
+                            "parsedQuery" : {
+                                "$and" : [ 
+                                    {
+                                        "esOrigenCDC" : {
+                                            "$eq" : true
+                                        }
+                                    }, 
+                                    {
+                                        "_insertedTS" : {
+                                            "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                                        }
+                                    }
+                                ]
+                            },
+                            "queryHash" : "63428590",
+                            "planCacheKey" : "6CCA3B1E",
+                            "winningPlan" : {
+                                "stage" : "FETCH",
+                                "inputStage" : {
+                                    "stage" : "IXSCAN",
+                                    "keyPattern" : {
+                                        "_insertedTS" : 1,
+                                        "esOrigenCDC" : 1
+                                    },
+                                    "indexName" : "_insertedTS_1_esOrigenCDC_1",
+                                    "isMultiKey" : false,
+                                    "multiKeyPaths" : {
+                                        "_insertedTS" : [],
+                                        "esOrigenCDC" : []
+                                    },
+                                    "isUnique" : false,
+                                    "isSparse" : false,
+                                    "isPartial" : false,
+                                    "indexVersion" : 2,
+                                    "direction" : "forward",
+                                    "indexBounds" : {
+                                        "_insertedTS" : [ 
+                                            "(new Date(1654689190841), new Date(9223372036854775807)]"
+                                        ],
+                                        "esOrigenCDC" : [ 
+                                            "[true, true]"
+                                        ]
+                                    }
+                                }
+                            },
+                            "rejectedPlans" : []
+                        }
+                    }
+                }, 
+                {
+                    "$project" : {
+                        "_id" : true,
+                        "esOrigenCDC" : true,
+                        "fechaCDC" : true,
+                        "fechaTopicFinal" : true,
+                        "_insertedTS" : true,
+                        "fechaTopicCDC" : true,
+                        "filterNeg" : {
+                            "$cond" : [ 
+                                {
+                                    "$gte" : [ 
+                                        "$_insertedTS", 
+                                        "$fechaTopicFinal"
+                                    ]
+                                }, 
+                                {
+                                    "$const" : 1.0
+                                }, 
+                                {
+                                    "$const" : 0.0
+                                }
+                            ]
+                        },
+                        "filterNeg2" : {
+                            "$cond" : [ 
+                                {
+                                    "$gte" : [ 
+                                        "$fechaTopicFinal", 
+                                        "$fechaTopicCDC"
+                                    ]
+                                }, 
+                                {
+                                    "$const" : 1.0
+                                }, 
+                                {
+                                    "$const" : 0.0
+                                }
+                            ]
+                        }
+                    }
+                }, 
+                {
+                    "$match" : {
+                        "$and" : [ 
+                            {
+                                "filterNeg" : {
+                                    "$eq" : 1.0
+                                }
+                            }, 
+                            {
+                                "filterNeg2" : {
+                                    "$eq" : 1.0
+                                }
+                            }
+                        ]
+                    }
+                }, 
+                {
+                    "$group" : {
+                        "_id" : {
+                            "$const" : "Latencias Flujo Tarjeta Crédito"
+                        },
+                        "fecha" : {
+                            "$max" : "$_insertedTS"
+                        },
+                        "mediaMongo" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "maximoMongo" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "minimoMongo" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "mediaKafka" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "maximoKafka" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "minimoKafka" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "mediaCDC" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "maximoCDC" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "minimoCDC" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "mediaTotal" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "maximoTotal" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "minimoTotal" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "totalRegistros" : {
+                            "$sum" : {
+                                "$const" : 1.0
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "XXEMONGODBXAS_2" : {
+            "host" : "XXEMONGODBXAS24:27018",
+            "stages" : [ 
+                {
+                    "$cursor" : {
+                        "query" : {
+                            "$and" : [ 
+                                {
+                                    "_insertedTS" : {
+                                        "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                                    }
+                                }, 
+                                {
+                                    "esOrigenCDC" : {
+                                        "$eq" : true
+                                    }
+                                }
+                            ]
+                        },
+                        "fields" : {
+                            "_insertedTS" : 1,
+                            "esOrigenCDC" : 1,
+                            "fechaCDC" : 1,
+                            "fechaTopicCDC" : 1,
+                            "fechaTopicFinal" : 1,
+                            "_id" : 1
+                        },
+                        "queryPlanner" : {
+                            "plannerVersion" : 1,
+                            "namespace" : "ZPFMMDB001_CGE.movimientosTarjetaCredito",
+                            "indexFilterSet" : false,
+                            "parsedQuery" : {
+                                "$and" : [ 
+                                    {
+                                        "esOrigenCDC" : {
+                                            "$eq" : true
+                                        }
+                                    }, 
+                                    {
+                                        "_insertedTS" : {
+                                            "$gt" : ISODate("2022-06-08T11:53:10.841Z")
+                                        }
+                                    }
+                                ]
+                            },
+                            "queryHash" : "63428590",
+                            "planCacheKey" : "6CCA3B1E",
+                            "winningPlan" : {
+                                "stage" : "FETCH",
+                                "inputStage" : {
+                                    "stage" : "IXSCAN",
+                                    "keyPattern" : {
+                                        "_insertedTS" : 1,
+                                        "esOrigenCDC" : 1
+                                    },
+                                    "indexName" : "_insertedTS_1_esOrigenCDC_1",
+                                    "isMultiKey" : false,
+                                    "multiKeyPaths" : {
+                                        "_insertedTS" : [],
+                                        "esOrigenCDC" : []
+                                    },
+                                    "isUnique" : false,
+                                    "isSparse" : false,
+                                    "isPartial" : false,
+                                    "indexVersion" : 2,
+                                    "direction" : "forward",
+                                    "indexBounds" : {
+                                        "_insertedTS" : [ 
+                                            "(new Date(1654689190841), new Date(9223372036854775807)]"
+                                        ],
+                                        "esOrigenCDC" : [ 
+                                            "[true, true]"
+                                        ]
+                                    }
+                                }
+                            },
+                            "rejectedPlans" : []
+                        }
+                    }
+                }, 
+                {
+                    "$project" : {
+                        "_id" : true,
+                        "fechaTopicCDC" : true,
+                        "fechaTopicFinal" : true,
+                        "_insertedTS" : true,
+                        "esOrigenCDC" : true,
+                        "fechaCDC" : true,
+                        "filterNeg" : {
+                            "$cond" : [ 
+                                {
+                                    "$gte" : [ 
+                                        "$_insertedTS", 
+                                        "$fechaTopicFinal"
+                                    ]
+                                }, 
+                                {
+                                    "$const" : 1.0
+                                }, 
+                                {
+                                    "$const" : 0.0
+                                }
+                            ]
+                        },
+                        "filterNeg2" : {
+                            "$cond" : [ 
+                                {
+                                    "$gte" : [ 
+                                        "$fechaTopicFinal", 
+                                        "$fechaTopicCDC"
+                                    ]
+                                }, 
+                                {
+                                    "$const" : 1.0
+                                }, 
+                                {
+                                    "$const" : 0.0
+                                }
+                            ]
+                        }
+                    }
+                }, 
+                {
+                    "$match" : {
+                        "$and" : [ 
+                            {
+                                "filterNeg" : {
+                                    "$eq" : 1.0
+                                }
+                            }, 
+                            {
+                                "filterNeg2" : {
+                                    "$eq" : 1.0
+                                }
+                            }
+                        ]
+                    }
+                }, 
+                {
+                    "$group" : {
+                        "_id" : {
+                            "$const" : "Latencias Flujo Tarjeta Crédito"
+                        },
+                        "fecha" : {
+                            "$max" : "$_insertedTS"
+                        },
+                        "mediaMongo" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "maximoMongo" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "minimoMongo" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaTopicFinal"
+                                ]
+                            }
+                        },
+                        "mediaKafka" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "maximoKafka" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "minimoKafka" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicFinal", 
+                                    "$fechaTopicCDC"
+                                ]
+                            }
+                        },
+                        "mediaCDC" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "maximoCDC" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "minimoCDC" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$fechaTopicCDC", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "mediaTotal" : {
+                            "$avg" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "maximoTotal" : {
+                            "$max" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "minimoTotal" : {
+                            "$min" : {
+                                "$subtract" : [ 
+                                    "$_insertedTS", 
+                                    "$fechaCDC"
+                                ]
+                            }
+                        },
+                        "totalRegistros" : {
+                            "$sum" : {
+                                "$const" : 1.0
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "ok" : 1.0,
+    "operationTime" : Timestamp(1654689250, 29),
+    "$clusterTime" : {
+        "clusterTime" : Timestamp(1654689250, 29),
+        "signature" : {
+            "hash" : { "$binary" : "gMj0B1H3g3iwep5N2w9F8LgxmCM=", "$type" : "00" },
+            "keyId" : NumberLong(7064504028280913922)
+        }
+    }
+}
